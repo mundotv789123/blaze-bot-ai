@@ -17,13 +17,13 @@ public class NeuralNetwork implements Serializable {
     private final NeuralNetwork children;
 
     /* construtores */
-    public NeuralNetwork(int inputs, int... childres) {
+    public NeuralNetwork(int inputs, int... outputs) {
         this.inputs = inputs;
-        this.neurons = new Neuron[childres[0]];
+        this.neurons = new Neuron[outputs[0]];
 
         NeuralNetwork nn = null;
-        for (int i = (childres.length - 1); i > 0; i--) {
-            nn = new NeuralNetwork(childres[i - 1], childres[i], nn);
+        for (int i = (outputs.length - 1); i > 0; i--) {
+            nn = new NeuralNetwork(outputs[i - 1], outputs[i], nn);
         }
 
         children = nn;
@@ -63,18 +63,22 @@ public class NeuralNetwork implements Serializable {
         return this.getSignals(inputs);
     }
 
-    public void sortWeights(NeuralNetwork network) {
+    public void sortWeights(NeuralNetwork network, int variation) {
         Neuron[] neurons2 = network.getNeurons();
         if (neurons2.length != this.neurons.length) {
             throw new IndexOutOfBoundsException("neural network has incompatible neurons");
         }
 
         for (int i = 0; i < neurons.length; i++) {
-            this.neurons[i].sortWeights(neurons2[i].getWeights());
+            this.neurons[i].sortWeights(neurons2[i].getWeights(), variation);
         }
         if (children != null) {
-            children.sortWeights(network.getChildren());
+            children.sortWeights(network.getChildren(), variation);
         }
+    }
+    
+    public void sortWeights(NeuralNetwork network) {
+        sortWeights(network, 1);
     }
     
     public void sortWeights() {

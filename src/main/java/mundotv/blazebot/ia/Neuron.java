@@ -10,10 +10,10 @@ public final class Neuron implements Serializable {
 
     public Neuron(int inputs) {
         this.weights = new int[inputs];
-        
+
         sortWeights();
     }
-    
+
     /* gerando cada peso com valores aleatorios de -1000 a 1000 */
     public void sortWeights() {
         Random r = new Random();
@@ -21,17 +21,17 @@ public final class Neuron implements Serializable {
             weights[i] = r.nextInt(2000) - 1000;
         }
     }
-    
+
     /* sorteando pesos com base nos pesos informados */
-    public void sortWeights(int[] weights) {
+    public void sortWeights(int[] weights, int variation) {
         if (weights.length != this.weights.length) {
             throw new IndexOutOfBoundsException("weights length need to be " + this.weights.length);
         }
 
         Random random = new Random();
         for (int i = 0; i < this.weights.length; i++) {
-            int nr = random.nextInt(100) - 50;
-            this.weights[i] = weights[i] +nr;
+            int nr = random.nextInt((variation * 2) + 1) - variation;
+            this.weights[i] = weights[i] + nr;
         }
     }
 
@@ -51,7 +51,7 @@ public final class Neuron implements Serializable {
     public int[] getWeights() {
         return weights;
     }
-    
+
     /* função apenas para mostrar os pesos de uma rede */
     @Override
     public String toString() {
