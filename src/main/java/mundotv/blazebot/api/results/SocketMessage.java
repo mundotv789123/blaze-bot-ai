@@ -6,7 +6,7 @@ import javax.annotation.Nullable;
 public class SocketMessage {
 
     private final String id;
-    private final HashMap<String, Object> payload;
+    private HashMap<String, Object> payload;
 
     public SocketMessage(String id) {
         this.id = id;
@@ -21,5 +21,12 @@ public class SocketMessage {
     @Nullable
     public HashMap<String, Object> getPayload() {
         return payload;
+    }
+
+    public void addPayload(String str, Object obj) {
+        if (payload == null) {
+            payload = new HashMap();
+        }
+        payload.put(str, obj);
     }
 }

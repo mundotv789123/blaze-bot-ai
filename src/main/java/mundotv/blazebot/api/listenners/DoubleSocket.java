@@ -18,7 +18,7 @@ public abstract class DoubleSocket extends BlazeWebSocket {
     public void onOpen(ServerHandshake sh) {
         super.onOpen(sh);
         SocketMessage message = new SocketMessage("subscribe");
-        message.getPayload().put("room", "double_v2");
+        message.addPayload("room", "double_v2");
         sendMessage(420, message);
     }
 
