@@ -26,6 +26,19 @@ public final class BotStates {
         double sun = walletWin + walletLoss;
         return Math.round((float)((walletWin * 100) / sun));
     }
+    
+    public int getColorPercent() {
+        if (red == 0 && black == 0) {
+            return 0;
+        }
+        int sum = red + black;
+        
+        if (red > black) {
+            return ((red * 100) / sum);
+        } else {
+            return ((black * 100) / sum);
+        }
+    }
 
     /* getters */
     public int getWin() {

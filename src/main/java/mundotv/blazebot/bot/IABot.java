@@ -7,8 +7,8 @@ import mundotv.blazebot.ia.NeuralNetwork;
 public class IABot {
 
     private final NeuralNetwork network;
-    private static int historySize = 8;
-    private static int inputs = 2;
+    private static int historySize = 5;
+    private static int inputs = 0; //inputs extras alem do histórico de cores
 
     protected int galeColor = 0, currentGale = 0;
     protected double[] gales = {4, 8, 16};
@@ -16,6 +16,8 @@ public class IABot {
     /* informações das apostas */
     protected double wallet = 50;
     protected final List<Integer> bets = new ArrayList();
+
+    protected BotListeners listener;
 
     public IABot(NeuralNetwork network) {
         if (network.getInputs() != (historySize + inputs)) {
@@ -26,7 +28,7 @@ public class IABot {
 
     public IABot() {
         //melhor 8 6 9 4
-        this.network = new NeuralNetwork((historySize + inputs), 14, 4);
+        this.network = new NeuralNetwork((historySize + inputs), (historySize + inputs), 8, 4);
     }
 
     public double getValue() {
@@ -35,7 +37,6 @@ public class IABot {
 
     public boolean upGale() {
         if ((currentGale + 1) >= gales.length) {
-            resetGale();
             return false;
         }
         currentGale++;
@@ -75,32 +76,70 @@ public class IABot {
         return bets;
     }
 
-    public boolean processBet(int bcolor, int color) {
-        if (bcolor == color) {
-            addValue(getValue() * (bcolor == 3 ? 14 : 2));
+    public void processBets(int color) {
+        /* fazendo gale */
+        if (currentGale > 0) {
+            bets.clear();
+            if (galeColor == color) {
+                addValue(getValue() * (color == 3 ? 14.0 : 2.0));
+                if (listener != null) {
+                    listener.onWin(color, currentGale);
+                }
+            } else if (upGale()) {
+                removeValue(getValue());
+                if (listener != null) {
+                    listener.onGale(galeColor, currentGale);
+                }
+                return;
+            }
             resetGale();
-            return true;
+            return;
         }
 
-        if (galeColor > 0 && upGale()) {
-            removeValue(getValue());
-            return true;
+        /* processando apostas */
+        for (int bcolor : bets) {
+            if (bcolor == color) {
+                addValue(getValue() * (color == 3 ? 14.0 : 2.0));
+                resetGale();
+                if (listener != null) {
+                    listener.onWin(galeColor, currentGale);
+                }
+                continue;
+            }
+            if (galeColor == bcolor) {
+                if (upGale()) {
+                    removeValue(getValue());
+                    if (listener != null) {
+                        listener.onGale(galeColor, currentGale);
+                    }
+                    continue;
+                }
+                resetGale();
+            }
+            if (listener != null) {
+                listener.onLoss(galeColor, currentGale);
+            }
         }
-
-        resetGale();
-        return false;
+        bets.clear();
     }
 
     public void doBet(int color, boolean gale) {
-        bets.add(color);
-        if (color == 3) {
-            removeValue(2.0);
-        } else {
-            removeValue(getValue());
+        if (currentGale > 0) {
+            return;
         }
-        if (gale) {
+        bets.add(color);
+        removeValue(color == 3 ? 2.0 : getValue());
+
+        if (gale && currentGale <= 0 && color != 3) {
             galeColor = color;
         }
+        if (listener != null) {
+            listener.onBet(color, gale);
+        }
+    }
+
+    public void setListener(BotListeners listener) {
+        this.listener = listener;
     }
 
     public void addValue(double value) {
@@ -124,8 +163,9 @@ public class IABot {
     public Integer[] getActions(List<Integer> history) {
         Integer[] h = new Integer[historySize + inputs];
         history.toArray(h);
-        h[historySize] = currentGale;
-        h[historySize + 1] = Math.round((float) wallet);
+        //h[historySize] = currentGale;
+        //h[historySize + 1] = Math.round((float) wallet);
         return network.getActions(h);
+        //return network.getActions(history.toArray(Integer[]::new));
     }
 }

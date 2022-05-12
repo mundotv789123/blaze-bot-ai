@@ -20,19 +20,21 @@ public class NeuralNetwork implements Serializable {
     public NeuralNetwork(int inputs, int... outputs) {
         this.inputs = inputs;
         this.neurons = new Neuron[outputs[0]];
-
+        
+        /* interligando as redes de acordo com os valores */
         NeuralNetwork nn = null;
         for (int i = (outputs.length - 1); i > 0; i--) {
             nn = new NeuralNetwork(outputs[i - 1], outputs[i], nn);
         }
-
         children = nn;
-
+        
+        /* gerando neurônios */
         for (int i = 0; i < this.neurons.length; i++) {
             this.neurons[i] = new Neuron(inputs);
         }
     }
-
+    
+    /* esse construtor serve apenas para interligar as redes */
     private NeuralNetwork(int inputs, int neurons, NeuralNetwork children) {
         this.inputs = inputs;
         this.neurons = new Neuron[neurons];
@@ -42,8 +44,8 @@ public class NeuralNetwork implements Serializable {
         }
     }
 
-    /* funções dos neurônios */
-    public Integer[] getSignals(Integer... inputs) {
+    /* pegando os sinais */
+    private Integer[] getSignals(Integer... inputs) {
         if (inputs.length != this.inputs) {
             throw new IndexOutOfBoundsException("inputs length need to be " + this.inputs + " not " + inputs.length);
         }
@@ -55,14 +57,16 @@ public class NeuralNetwork implements Serializable {
         }
         return outputs;
     }
-
+    
+    /* calculando os sinais para pegar as saidas */
     public Integer[] getActions(Integer... inputs) {
         if (children != null) {
             return children.getActions(this.getSignals(inputs));
         }
         return this.getSignals(inputs);
     }
-
+    
+    /* sorteando pesos */
     public void sortWeights(NeuralNetwork network, int variation) {
         Neuron[] neurons2 = network.getNeurons();
         if (neurons2.length != this.neurons.length) {
@@ -77,13 +81,18 @@ public class NeuralNetwork implements Serializable {
         }
     }
     
+    /* variante padrão */
     public void sortWeights(NeuralNetwork network) {
         sortWeights(network, 1);
     }
     
+    /* sorteando aleatório */
     public void sortWeights() {
         for (Neuron neuron : neurons) {
             neuron.sortWeights();
+        }
+        if (children != null) {
+            children.sortWeights();
         }
     }
 
@@ -91,13 +100,13 @@ public class NeuralNetwork implements Serializable {
     public int getInputs() {
         return inputs;
     }
+    
+    public Neuron[] getNeurons() {
+        return neurons;
+    }
 
     public NeuralNetwork getChildren() {
         return children;
-    }
-
-    public Neuron[] getNeurons() {
-        return neurons;
     }
 
     /* funções para importar/exportar arquivo da I.A. */
