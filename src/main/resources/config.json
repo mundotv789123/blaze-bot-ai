@@ -1,0 +1,8 @@
+{
+    "database": {
+        "host": "localhost",
+        "username": "root",
+        "password": "senha",
+        "database": "blaze_ia"
+    }
+}

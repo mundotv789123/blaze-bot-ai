@@ -1,4 +1,4 @@
-package mundotv.blazebot.ia;
+package mundotv.ia;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -81,7 +81,7 @@ public class NeuralNetwork implements Serializable {
         }
     }
     
-    /* variante padrão */
+    /* sorteando pesos (variante padrão) */
     public void sortWeights(NeuralNetwork network) {
         sortWeights(network, 1);
     }

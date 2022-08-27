@@ -1,4 +1,4 @@
-package mundotv.blazebot.ia;
+package mundotv.ia;
 
 import java.io.Serializable;
 import java.util.Arrays;

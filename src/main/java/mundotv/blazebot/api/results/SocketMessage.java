@@ -1,16 +1,17 @@
 package mundotv.blazebot.api.results;
 
-import java.util.HashMap;
 import javax.annotation.Nullable;
+import lombok.ToString;
 
-public class SocketMessage {
+@ToString
+public class SocketMessage<T> {
 
     private final String id;
-    private HashMap<String, Object> payload;
+    private final T payload;
 
-    public SocketMessage(String id) {
+    public SocketMessage(String id, T payload) {
         this.id = id;
-        this.payload = new HashMap();
+        this.payload = payload;
     }
 
     @Nullable
@@ -18,15 +19,8 @@ public class SocketMessage {
         return id;
     }
 
-    @Nullable
-    public HashMap<String, Object> getPayload() {
+    public T getPayload() {
         return payload;
     }
-
-    public void addPayload(String str, Object obj) {
-        if (payload == null) {
-            payload = new HashMap();
-        }
-        payload.put(str, obj);
-    }
+   
 }

@@ -2,25 +2,32 @@ package mundotv.blazebot.api;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
+import java.lang.reflect.Type;
 import java.net.URI;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import lombok.Getter;
 import mundotv.blazebot.api.results.SocketMessage;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 
-public abstract class BlazeWebSocket extends WebSocketClient {
+public abstract class BlazeWebSocket<T> extends WebSocketClient {
 
     private boolean reconnect = true;
     private boolean ping = true;
 
     private Thread pingThread = null;
+    protected final Type type;
 
-    public BlazeWebSocket(URI uri) {
+    public BlazeWebSocket(URI uri, Type type) {
         super(uri);
+        this.type = type;
     }
 
-    public BlazeWebSocket(URI uri, boolean reconnect) {
+    public BlazeWebSocket(URI uri, boolean reconnect, Type type) {
         super(uri);
         this.reconnect = reconnect;
+        this.type = type;
     }
 
     @Override
@@ -30,35 +37,32 @@ public abstract class BlazeWebSocket extends WebSocketClient {
             return;
         }
         pingThread = new Thread(() -> {
-            try {
-                while (true) {
+            while (true) {
+                try {
                     Thread.sleep(3000);
                     send("2");
+                } catch (InterruptedException ex) {
                 }
-            } catch (InterruptedException ex) {
             }
         });
         pingThread.start();
     }
 
     @Override
-    public void onMessage(String string) {
+    public void onMessage(String msg) {
+        if (msg == null) {
+            return;
+        }
+
+        Pattern p = Pattern.compile("^([\\d]{0,4}\\[\\\"[\\w]+\\\",)(.+)(\\])$");
+        Matcher m = p.matcher(msg);
+
+        if (!m.matches()) {
+            return;
+        }
+        
         try {
-            if (string == null) {
-                return;
-            }
-
-            while (!string.equals("") && !string.startsWith(",")) {
-                string = string.substring(1);
-            }
-            if (string.equals("") || string.length() < 3) {
-                return;
-            }
-            string = string.substring(1);
-            string = string.substring(0, string.length() - 1);
-
-            Gson gson = new Gson();
-            SocketMessage message = gson.fromJson(string, SocketMessage.class);
+            SocketMessage<T> message = new Gson().fromJson(m.group(2), type);
             handlerMessage(message);
         } catch (JsonSyntaxException ex) {
         }
@@ -87,7 +91,7 @@ public abstract class BlazeWebSocket extends WebSocketClient {
             onError(ex);
         }
     }
-    
+
     @Override
     public void onError(Exception ex) {
         ex.printStackTrace(); //log erro
@@ -102,5 +106,13 @@ public abstract class BlazeWebSocket extends WebSocketClient {
         this.ping = ping;
     }
 
-    public abstract void handlerMessage(SocketMessage message);
+    public abstract void handlerMessage(SocketMessage<T> message);
+    
+    public static class Room {
+        @Getter
+        private final String room;
+        public Room(String room) {
+            this.room = room;
+        }
+    }
 }
