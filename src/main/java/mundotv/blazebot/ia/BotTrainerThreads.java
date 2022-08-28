@@ -33,6 +33,9 @@ public class BotTrainerThreads {
                 bestBot = bot.getBestBot();
             }
         }
+        /*for (BotTrainer bot : bots) {
+            bot.setBestBot(bestBot);
+        }*/
     }
 
 }

@@ -34,6 +34,7 @@ public class Main {
     public static void main(String[] args) throws Exception {
         CommandLine command = loadOptions(args);
 
+        /* gerando arquivo de configuração */
         File config = new File("./config.json");
         if (!config.exists()) {
             FileUtils.copyInputStreamToFile(Main.class.getResourceAsStream("/config.json"), config);
@@ -41,9 +42,9 @@ public class Main {
             return;
         }
 
+        /* carregando configurações */
         Gson gson = new GsonBuilder().create();
         Main main = gson.fromJson(new FileReader(config), Main.class);
-
         if (main == null) {
             throw new NullPointerException("Config not found!");
         }
@@ -53,12 +54,13 @@ public class Main {
             return;
         }
 
+        File file = new File("./neural_network.dat");
         if (command.hasOption("trane")) {
-            main.trane();
+            main.trane(file);
             return;
         }
 
-        main.start();
+        main.start(file);
     }
 
     public static CommandLine loadOptions(String[] args) {
@@ -94,35 +96,48 @@ public class Main {
         }
     }
 
-    public BotTrainerThreads trane() throws SQLException {
+    public BotTrainerThreads trane(File file) throws SQLException, IOException {
         /* preparando dados para o treinamento */
         List<Integer> datas = new ArrayList();
-        List<ColorResult> colors = database.getAllHistory();
-        for (ColorResult cr : colors) {
-            datas.add(Math.round(cr.getColor()));
+        List<ColorResult> colors = database.getAllHistory(1550);
+        for (int c = (colors.size() - 1); c >= 0; c--) {
+            datas.add(Math.round(colors.get(c).getColor()));
         }
+        
+        /* dados para colocar na class main depois */
+        float[] gales = {4, 8, 16}; //modo de jogo com gales
+        int threads = 10, bots_count = 2000000; //dados para o treinamento
 
         /* treinando */
-        BotTrainerThreads bt = new BotTrainerThreads(5, 500000, 4, 8, 16);
+        BotTrainerThreads bt = new BotTrainerThreads(threads, bots_count, gales);
         int g = 0;
         do {
-            System.out.println("Geração: " + g);
+            System.out.println((g == 0 ? "Processando..." : ("Geração: " + g)));
             bt.trane(datas);
             if (bt.getBestBot() != null) {
                 g++;
+                System.out.println("Melhor da geração: R$ "+bt.getBestBot().getWallet());
             }
-        } while (bt.getBestBot() == null || bt.getBestBot().getWallet() < 50 || g <= 1);
+        } while (bt.getBestBot() == null || bt.getBestBot().getWallet() < 50 || g <= 10);
+
+        /* exportando arquivo i.a */
+        if (file != null) {
+            bt.getBestBot().getNetwork().exportFile(file);
+        }
 
         return bt;
     }
 
-    public void start() throws SQLException, IOException, FileNotFoundException, ClassNotFoundException, URISyntaxException {
-        File file = new File("./neural_network.dat");
+    public void start(File file) throws SQLException, IOException {
         if (!file.exists()) {
-            trane().getBestBot().getNetwork().exportFile(file);
+            trane(file).getBestBot();
         }
-        BlazeDoubleIABot iabot = new BlazeDoubleIABot(new BlazeIABot(file, 50, 4, 8, 16));
-        iabot.connect();
+        try {
+            BlazeDoubleIABot iabot = new BlazeDoubleIABot(new BlazeIABot(file, 50, 4, 8, 16));
+            iabot.connect();
+        } catch (FileNotFoundException | ClassNotFoundException | URISyntaxException e) {
+            throw new IOException(e.getMessage());
+        }
     }
 
 }

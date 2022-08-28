@@ -7,18 +7,30 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import javax.annotation.Nullable;
 import mundotv.blazebot.api.results.ColorResult;
 
 public class BlazeRestAPI {
 
-    public ColorResult[] getLastHistory() {
+    public List<ColorResult> getLastHistory(int limit) {
         Gson gson = new Gson();
         String rest = makeRequest("/roulette_games/recent", "GET", null);
         if (rest == null) {
             return null;
         }
-        return gson.fromJson(rest, ColorResult[].class);
+        ColorResult[] colors = gson.fromJson(rest, ColorResult[].class);
+
+        List<ColorResult> colorsList = new ArrayList();
+
+        for (int c = 0; c < limit; c++) {
+            colorsList.add(colors[c]);
+        }
+        Collections.reverse(colorsList);
+        
+        return colorsList;
     }
 
     @Nullable
@@ -44,7 +56,7 @@ public class BlazeRestAPI {
             while ((line = br.readLine()) != null) {
                 res += line;
             }
-            
+
             return res;
         } catch (IOException ex) {
         }

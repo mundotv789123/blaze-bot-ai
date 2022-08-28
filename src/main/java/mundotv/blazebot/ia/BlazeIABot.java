@@ -12,11 +12,12 @@ import mundotv.ia.NeuralNetwork;
 @Getter
 public class BlazeIABot extends BlazeBot {
 
+    public static int HISTORY_LIMIT = 20;
     private final NeuralNetwork network;
 
     public BlazeIABot(double wallet, float... gales) {
         super(wallet, gales);
-        this.network = new NeuralNetwork(20, 20, 15, 3);
+        this.network = new NeuralNetwork(HISTORY_LIMIT, HISTORY_LIMIT, Math.round((HISTORY_LIMIT+3)/2), 3);
     }
 
     public BlazeIABot(File network, double wallet, float... gales) throws IOException, FileNotFoundException, ClassNotFoundException {
@@ -25,7 +26,7 @@ public class BlazeIABot extends BlazeBot {
     }
 
     public boolean doBet(List<Integer> history) {
-        Integer[] inputs = new Integer[20];
+        Integer[] inputs = new Integer[HISTORY_LIMIT];
         history.toArray(inputs);
         Integer[] actions = network.getActions(inputs);
         

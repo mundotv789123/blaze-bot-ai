@@ -3,11 +3,13 @@ package mundotv.blazebot.ia;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
+import lombok.Setter;
 import mundotv.blazebot.bot.BlazeBot;
 
 public class BotTrainer {
 
     @Getter
+    @Setter
     private BlazeIABot bestBot = null;
     private final List<BlazeIABot> bots = new ArrayList();
 
@@ -30,10 +32,10 @@ public class BotTrainer {
             List<Integer> history = new ArrayList();
             for (int color : datas) {
                 history.add(color);
-                if (history.size() < 20) {
+                if (history.size() < BlazeIABot.HISTORY_LIMIT) {
                     continue;
                 }
-                while (history.size() > 20) {
+                while (history.size() > BlazeIABot.HISTORY_LIMIT) {
                     history.remove(0);
                 }
                 BlazeBot.Status status = bot.processBets(color);
@@ -47,7 +49,7 @@ public class BotTrainer {
             history.clear();
             if (isBetter(bot)) {
                 bestBot = bot;
-                System.out.println(bot.getWallet() + " é o melhor agora");
+                System.out.println("Melhor: R$ "+bestBot.getWallet());
             }
         }
     }
@@ -55,6 +57,7 @@ public class BotTrainer {
     public Thread traneThread(List<Integer> datas) {
         Thread thread = new Thread(() -> {
             this.trane(datas);
+            System.out.println("thread finalizada.");
         });
         thread.start();
         return thread;

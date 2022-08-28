@@ -39,10 +39,11 @@ public class Database {
         }
     }
 
-    public List<ColorResult> getAllHistory() throws SQLException {
+    public List<ColorResult> getAllHistory(int limit) throws SQLException {
         List<ColorResult> colors = new ArrayList();
         try ( Connection conn = getConn()) {
-            PreparedStatement ps = conn.prepareStatement("SELECT * FROM `bz_history`");
+            PreparedStatement ps = conn.prepareStatement("SELECT * FROM `bz_history` order by created_at desc limit ?");
+            ps.setInt(1, limit);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 colors.add(new ColorResult((float) rs.getInt("color"), (float) rs.getInt("roll")));

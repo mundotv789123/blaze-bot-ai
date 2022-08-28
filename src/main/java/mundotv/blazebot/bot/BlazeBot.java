@@ -26,14 +26,15 @@ public class BlazeBot {
             return Status.NONE;
         }
 
-        if (color == bet || color == 0) {
+        if (color == bet || (color == 0 && cgale == 0)) {
+            // verificando se for branco dar o valor 2 multiplicado por 14
             wallet += (color == 0 ? 28 : (gales[cgale] * 2));
             reset();
             return Status.WIN;
         }
 
         if (gales.length > ++cgale) {
-            wallet -= (gales[cgale] + (color == 0 ? 0 : 2));
+            wallet -= (gales[cgale]);
             return Status.GALE;
         }
 
@@ -51,6 +52,7 @@ public class BlazeBot {
         }
 
         bet = color;
+        // apostando com proteção do branco
         wallet -= (gales[cgale] + (color == 0 ? 0 : 2));
         return true;
     }
