@@ -2,40 +2,54 @@ package mundotv.blazebot.ia;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.Getter;
+import mundotv.ia.NeuralNetwork;
 
 public class BotTrainerThreads {
 
     @Getter
     private BlazeIABot bestBot = null;
+    @Getter
     private final List<BotTrainer> bots = new ArrayList();
 
-    public BotTrainerThreads(int threads, int bots, float... gales) {
-        int botpt = Math.round(bots / threads);
+    public BotTrainerThreads(int threads, int bots, float wallet, float white, float... gales) {
+        int botspt = Math.round(bots / threads);
         for (int t = 0; t < threads; t++) {
-            this.bots.add(new BotTrainer(botpt, gales));
+            this.bots.add(new BotTrainer(botspt, wallet, white, gales));
         }
     }
 
-    public void trane(List<Integer> datas) {
-        List<Thread> threads = new ArrayList();
-        for (BotTrainer bot : bots) {
-            threads.add(bot.traneThread(datas));
+    public BotTrainerThreads(int threads, int bots, NeuralNetwork network, float wallet, float white, float... gales) {
+        int botspt = Math.round(bots / threads);
+        for (int t = 0; t < threads; t++) {
+            this.bots.add(new BotTrainer(botspt, network, wallet, white, gales));
         }
-        for (Thread thread : threads) {
+    }
+
+    public void traine(List<Integer> datas) {
+        /* executando os bots em threads */
+        List<Thread> threads = bots.stream().map(b -> b.traineThread(datas)).collect(Collectors.toList());
+
+        /* entrando e aguardando os threads terminarem */
+        threads.forEach(t -> {
             try {
-                thread.join();
-            } catch (InterruptedException ex) {
+                t.join();
+            } catch (InterruptedException e) {
             }
-        }
-        for (BotTrainer bot : bots) {
-            if (bestBot == null || (bot.getBestBot() != null && !bot.isBetter(bestBot))) {
-                bestBot = bot.getBestBot();
+        });
+
+        /* definindo a melhor rede */
+        bots.forEach(b -> {
+            if (bestBot == null || (b.getBestBot() != null && !b.isBetter(bestBot))) {
+                bestBot = b.getBestBot();
             }
-        }
-        /*for (BotTrainer bot : bots) {
-            bot.setBestBot(bestBot);
-        }*/
+        });
+
+        /* aplicando a melhor rede em threads sem melhor rede */
+        bots.stream().filter((b) -> b.getBestBot() == null).forEach((b) -> {
+            b.setBestBot(bestBot);
+        });
     }
 
 }

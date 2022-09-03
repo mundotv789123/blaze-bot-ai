@@ -1,4 +1,5 @@
-/neural_network.dat
+/neural_network*.dat
 /config.json
 /target
 /nbactions.xml
+/src/test/java/local

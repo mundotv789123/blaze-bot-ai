@@ -5,29 +5,42 @@ import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import mundotv.blazebot.bot.BlazeBot;
+import mundotv.ia.NeuralNetwork;
 
 public class BotTrainer {
 
     @Getter
     @Setter
     private BlazeIABot bestBot = null;
+    private final float wallet;
     private final List<BlazeIABot> bots = new ArrayList();
+    private int count = 0;
 
-    public BotTrainer(int botsCount, float... gales) {
+    public BotTrainer(int botsCount, float wallet, float white, float... gales) {
+        this.wallet = wallet;
         for (int i = 0; i < botsCount; i++) {
-            bots.add(new BlazeIABot(50, gales));
+            bots.add(new BlazeIABot(wallet, white, gales));
         }
     }
 
-    public void trane(List<Integer> datas) {
+    public BotTrainer(int botsCount, NeuralNetwork network, float wallet, float white, float... gales) {
+        this.wallet = wallet;
+        for (int i = 0; i < botsCount; i++) {
+            bots.add(new BlazeIABot(network, wallet, white, gales));
+        }
+    }
+
+    public void traine(List<Integer> datas) {
+        this.count = 0;
         for (BlazeIABot bot : bots) {
+            count++;
             if (bestBot == null) {
                 bot.getNetwork().sortWeights();
             } else {
                 bot.getNetwork().sortWeights(bestBot.getNetwork());
             }
-            bot.reset();
-            bot.setWallet(50);
+            bot.resetAll();
+            bot.setWallet(wallet);
 
             List<Integer> history = new ArrayList();
             for (int color : datas) {
@@ -49,22 +62,37 @@ public class BotTrainer {
             history.clear();
             if (isBetter(bot)) {
                 bestBot = bot;
-                System.out.println("Melhor: R$ "+bestBot.getWallet());
+                System.out.println("\033[1K\rBest: R$ " + Math.round(bestBot.getWallet() * 100f) / 100f);
             }
         }
     }
-    
-    public Thread traneThread(List<Integer> datas) {
+
+    public Thread traineThread(List<Integer> datas) {
         Thread thread = new Thread(() -> {
-            this.trane(datas);
-            System.out.println("thread finalizada.");
+            this.traine(datas);
         });
         thread.start();
         return thread;
     }
 
     public boolean isBetter(BlazeIABot bot) {
-        return bot.getWallet() > 50 && (bestBot == null || bestBot.getWallet() < bot.getWallet());
+        if (bot.getWins() < bot.getLoss()) {
+            return false;
+        }
+        if (bot.getWallet() < wallet) {
+            return false;
+        }
+        /*if (bot.getPercentWins() < 80) {
+            return false;
+        }*/
+        if (bestBot == null || bestBot.getWallet() < wallet) {
+            return true;
+        }
+        return bot.getPercentWins() > bestBot.getPercentWins();
     }
-    
+
+    public int getPercent() {
+        return count * 100 / bots.size();
+    }
+
 }

@@ -1,4 +1,12 @@
 {
+    "gales": [4, 8, 16],
+    "wallet": 50,
+    "white": 4,
+    "threads": 24,
+    "bots_count": 3000000,
+    "bets_to_traine": 3000,
+    "rand_offset": 200,
+    "max_generations": 20,
     "database": {
         "host": "localhost",
         "username": "root",

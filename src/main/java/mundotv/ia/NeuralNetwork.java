@@ -116,7 +116,7 @@ public class NeuralNetwork implements Serializable {
         }
     }
 
-    public static NeuralNetwork inportFile(File file) throws FileNotFoundException, IOException, ClassNotFoundException {
+    public static NeuralNetwork importFile(File file) throws FileNotFoundException, IOException, ClassNotFoundException {
         NeuralNetwork nn;
         try ( FileInputStream fin = new FileInputStream(file);  ObjectInputStream oin = new ObjectInputStream(fin)) {
             nn = (NeuralNetwork) oin.readObject();
