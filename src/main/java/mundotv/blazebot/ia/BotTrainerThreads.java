@@ -13,17 +13,17 @@ public class BotTrainerThreads {
     @Getter
     private final List<BotTrainer> bots = new ArrayList();
 
-    public BotTrainerThreads(int threads, int bots, float wallet, float white, float... gales) {
+    public BotTrainerThreads(int threads, int bots, int percent, float wallet, float[] whites, float[] gales) {
         int botspt = Math.round(bots / threads);
         for (int t = 0; t < threads; t++) {
-            this.bots.add(new BotTrainer(botspt, wallet, white, gales));
+            this.bots.add(new BotTrainer(botspt, percent, wallet, whites, gales));
         }
     }
 
-    public BotTrainerThreads(int threads, int bots, NeuralNetwork network, float wallet, float white, float... gales) {
+    public BotTrainerThreads(int threads, int bots, NeuralNetwork network, int percent, float wallet, float[] whites, float[] gales) {
         int botspt = Math.round(bots / threads);
         for (int t = 0; t < threads; t++) {
-            this.bots.add(new BotTrainer(botspt, network, wallet, white, gales));
+            this.bots.add(new BotTrainer(botspt, network, percent, wallet, whites, gales));
         }
     }
 
@@ -47,7 +47,7 @@ public class BotTrainerThreads {
         });
 
         /* aplicando a melhor rede em threads sem melhor rede */
-        bots.stream().filter((b) -> b.getBestBot() == null).forEach((b) -> {
+        bots.stream().filter(b -> b.getBestBot() == null).forEach(b -> {
             b.setBestBot(bestBot);
         });
     }

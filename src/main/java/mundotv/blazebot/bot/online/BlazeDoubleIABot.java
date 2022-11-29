@@ -35,10 +35,8 @@ public class BlazeDoubleIABot extends DoubleSocket {
         int gale = bot.getCgale();
         BlazeBot.Status status = bot.processBets(color);
         switch (status) {
-            case NONE:
-                if (bot.doBet(history)) {
-                    System.out.println("Jogue na cor: " + ColorEnum.getColor(bot.getBet()) + " (proteção no branco)" + " R$ " + bot.getWallet());
-                }
+            case WIN:
+                System.out.println("Ganhou G" + gale + (color == 0 ? " (BRANCO!)" : "") + " R$ " + bot.getWallet());
                 break;
             case GALE:
                 System.out.println("Faça G" + bot.getCgale() + " R$ " + bot.getWallet());
@@ -46,9 +44,9 @@ public class BlazeDoubleIABot extends DoubleSocket {
             case LOSS:
                 System.out.println("Perdeu R$ " + bot.getWallet());
                 break;
-            case WIN:
-                System.out.println("Ganhou G" + gale + (color == 0 ? " (BRANCO!)" : "") + " R$ " + bot.getWallet());
-                break;
+        }
+        if (bot.doBet(history)) {
+            System.out.println("Jogue na cor: " + ColorEnum.getColor(bot.getBet()) + " (proteção no branco)" + " R$ " + bot.getWallet());
         }
     }
 
@@ -58,5 +56,5 @@ public class BlazeDoubleIABot extends DoubleSocket {
         history = api.getLastHistory(BlazeIABot.HISTORY_LIMIT).stream().map((c) -> Math.round(c.getColor())).collect(Collectors.toList());
         super.connect();
     }
-    
+
 }

@@ -1,7 +1,8 @@
 {
     "gales": [4, 8, 16],
+    "whites": [2],
+    "percent": 60,
     "wallet": 50,
-    "white": 4,
     "threads": 24,
     "bots_count": 3000000,
     "bets_to_traine": 3000,

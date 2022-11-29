@@ -1,7 +1,6 @@
 package mundotv.ia;
 
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.Random;
 
 public final class Neuron implements Serializable {
@@ -10,7 +9,6 @@ public final class Neuron implements Serializable {
 
     public Neuron(int inputs) {
         this.weights = new int[inputs];
-
         sortWeights();
     }
 
@@ -22,15 +20,23 @@ public final class Neuron implements Serializable {
         }
     }
 
+    /* gerando cada peso com valores aleatorios baseados em variações */
+    public void sortWeights(int variation) {
+        Random r = new Random();
+        for (int i = 0; i < weights.length; i++) {
+            weights[i] = weights[i] + r.nextInt((variation * 2) + 1) - variation;
+        }
+    }
+
     /* sorteando pesos com base nos pesos informados */
     public void sortWeights(int[] weights, int variation) {
         if (weights.length != this.weights.length) {
             throw new IndexOutOfBoundsException("weights length need to be " + this.weights.length);
         }
 
-        Random random = new Random();
+        Random r = new Random();
         for (int i = 0; i < this.weights.length; i++) {
-            int nr = random.nextInt((variation * 2) + 1) - variation;
+            int nr = r.nextInt((variation * 2) + 1) - variation;
             this.weights[i] = weights[i] + nr;
         }
     }
@@ -50,12 +56,6 @@ public final class Neuron implements Serializable {
 
     public int[] getWeights() {
         return weights;
-    }
-
-    /* função apenas para mostrar os pesos de uma rede */
-    @Override
-    public String toString() {
-        return "Neuron{" + "weights=" + Arrays.toString(weights) + "}";
     }
 
 }

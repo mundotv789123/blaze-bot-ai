@@ -34,22 +34,10 @@ import org.apache.commons.io.FileUtils;
 @ToString
 public class Main {
 
-    private final Database database;
-    private final float[] gales;
-    private final float wallet, white;
-    private final int threads, bots_count, bets_to_traine, rand_offset, max_generations;
-
-    public Main(Database database, float[] gales, float wallet, float white, int threads, int bots_count, int bets_to_traine, int rand_offset, int max_generations) {
-        this.database = database;
-        this.gales = gales;
-        this.wallet = wallet;
-        this.white = white;
-        this.threads = threads;
-        this.bots_count = bots_count;
-        this.bets_to_traine = bets_to_traine;
-        this.rand_offset = rand_offset;
-        this.max_generations = max_generations;
-    }
+    private Database database;
+    private float[] gales, whites;
+    private float wallet;
+    private int threads, percent, bots_count, bets_to_traine, rand_offset, max_generations;
 
     public static void main(String[] args) throws Exception {
         CommandLine command = loadOptions(args);
@@ -74,7 +62,7 @@ public class Main {
             return;
         }
 
-        File file = new File("./neural_network.dat");
+        File file = new File("./neural_network.json");
         if (command.hasOption("traine")) {
             main.traine(file);
             return;
@@ -118,17 +106,16 @@ public class Main {
 
     public BotTrainerThreads traine(File file) throws SQLException, IOException, FileNotFoundException, ClassNotFoundException {
         /* verificando arquivo de geração */
-        File genFile = new File("generation_network.dat");
+        File genFile = new File("generation_network.json");
         BotTrainerThreads bt;
         if (genFile.exists()) {
             System.out.println(genFile.getName() + " found! loading that...");
-            bt = new BotTrainerThreads(threads, bots_count, NeuralNetwork.importFile(genFile), wallet, white, gales);
+            bt = new BotTrainerThreads(threads, bots_count, NeuralNetwork.importFile(genFile, true), percent, wallet, whites, gales);
         } else {
-            bt = new BotTrainerThreads(threads, bots_count, wallet, white, gales);
+            bt = new BotTrainerThreads(threads, bots_count, percent, wallet, whites, gales);
         }
 
-        /* treinando */
-        int g = 0;
+        /* mostrando progresso no console */
         Thread display = new Thread(() -> {
             while (true) {
                 String bestWallet = bt.getBestBot() != null ? "R$ " + (Math.round(bt.getBestBot().getWallet() * 100f) / 100f) + " " : "";
@@ -137,7 +124,7 @@ public class Main {
                     percent += bot.getPercent();
                 }
                 percent = percent * 100 / (bt.getBots().size() * 100);
-                System.out.print("\033[1K\r" + bestWallet + getProgress(percent, 50) + " " + percent + "%");
+                System.out.print("\033[1K\r[" + getProgress(percent, 50) + "] " + percent + "% " + bestWallet);
                 try {
                     Thread.sleep(500);
                 } catch (InterruptedException ex) {
@@ -145,47 +132,44 @@ public class Main {
                 }
             }
         });
-
         display.start();
 
+        /* treinando */
+        int g = 0;
         do {
-            System.out.println("Training networks" + (g == 0 ? "..." : (" (Generation: " + g + ")...")));
-            /* preparando dados para o treinamento */
+            System.out.println("\033[1K\rTraining networks" + (g == 0 ? " (Searching...)" : (" (Generation: " + g + ")...")));
             Random r = new Random();
             List<Integer> colors = database.getAllHistory(bets_to_traine, (rand_offset == 0 ? 0 : r.nextInt(rand_offset))).stream().map((c) -> Math.round(c.getColor())).collect(Collectors.toList());
             bt.traine(colors);
             if (bt.getBestBot() != null) {
                 g++;
-                bt.getBestBot().getNetwork().exportFile(new File("generation_network.dat"));
+                bt.getBestBot().getNetwork().exportFile(new File("generation_network.json"), true);
                 System.out.println("\033[1K\rBest generation: R$ " + bt.getBestBot().getWallet() + " win: " + bt.getBestBot().getPercentWins() + "%");
             }
         } while (bt.getBestBot() == null || g <= max_generations);
 
+        /* parando mostragem de progresso na tela */
         display.interrupt();
         System.out.println("\033[1K\r");
 
         /* exportando arquivo i.a */
         if (file != null) {
-            bt.getBestBot().getNetwork().exportFile(file);
+            bt.getBestBot().getNetwork().exportFile(file, true);
         }
 
         return bt;
     }
 
-    public void start(File file) throws SQLException, IOException, FileNotFoundException, ClassNotFoundException {
+    public void start(File file) throws SQLException, IOException, FileNotFoundException, ClassNotFoundException, URISyntaxException {
         System.out.println("Start wallet: " + wallet);
         System.out.println("Gales: " + Arrays.toString(gales));
-        System.out.println("White protection: " + white);
+        System.out.println("White protection: " + Arrays.toString(whites));
         if (!file.exists()) {
             System.out.println(file.getName() + " not found, traning...");
-            traine(file).getBestBot();
+            traine(file);
         }
-        try {
-            BlazeDoubleIABot iabot = new BlazeDoubleIABot(new BlazeIABot(NeuralNetwork.importFile(file), wallet, white, gales));
-            iabot.connect();
-        } catch (FileNotFoundException | ClassNotFoundException | URISyntaxException e) {
-            throw new IOException(e.getMessage());
-        }
+        BlazeDoubleIABot iabot = new BlazeDoubleIABot(new BlazeIABot(NeuralNetwork.importFile(file, true), wallet, whites, gales));
+        iabot.connect();
     }
 
     public String getProgress(int percent, int size) {
